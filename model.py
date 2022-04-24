@@ -9,9 +9,9 @@ class MyModel(nn.Module):
         super(MyModel, self).__init__()
         self.model = models.resnet18(pretrained=True)
         self.model.requires_grad_(False)
-        self.model.fc = nn.Linear(model.fc.in_features, 2 * NUM_PTS, bias=True)
+        self.model.fc = nn.Linear(self.model.fc.in_features, 2 * NUM_PTS, bias=True)
         self.model.fc.requires_grad_(True)
         self.model.to(device)
     
     def forward(self, d):
-        return self.model.forawrd(d)
+        return self.model.forward(d)
