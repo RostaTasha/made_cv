@@ -106,6 +106,9 @@ def main(args):
     train_dataset = ThousandLandmarksDataset(os.path.join(args.data, "train"), train_transforms, split="train")
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=4, pin_memory=True,
                                   shuffle=True, drop_last=True)
+    with open(os.path.join("runs", f"{args.name}_train_predictions.pkl"), "wb") as fp:
+        pickle.dump({"image_names": train_dataset.image_names,
+                     "landmarks": train_dataset.landmarks.numpy()}, fp)
     val_dataset = ThousandLandmarksDataset(os.path.join(args.data, "train"), train_transforms, split="val")
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=4, pin_memory=True,
                                 shuffle=False, drop_last=False)
