@@ -15,6 +15,9 @@ from torch.nn import functional as fnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+import albumentations
+
+
 from utils import NUM_PTS, CROP_SIZE
 from utils import ScaleMinSideToSize, CropCenter, TransformByKeys
 from utils import ThousandLandmarksDataset
