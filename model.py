@@ -5,13 +5,12 @@ from utils import NUM_PTS
 
 
 class MyModel(nn.Module):
-    def __init__(self):
+    def __init__(self, freeze):
         super(MyModel, self).__init__()
-        self.model = models.resnext50_32x4d(pretrained=True)
-        for param in self.model.parameters():
-            param.requires_grad = False
-        self.model.fc = nn.Linear(self.model.fc.in_features, 2 * NUM_PTS, bias=True)
-        self.model.fc.requires_grad_(True)
+        self.backbone = models.resnext50_32x4d(pretrained=True)
+        self.backbone.requires_grad_(not freeze)
+        self.backbone.fc = nn.Linear(self.backbone.fc.in_features, 2 * NUM_PTS, bias=True)
+        self.backbone.fc.requires_grad_(True)
     
     def forward(self, d):
-        return self.model.forward(d)
+        return self.backbone.forward(d)

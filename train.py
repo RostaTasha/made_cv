@@ -38,11 +38,13 @@ def parse_arguments():
     parser.add_argument("--epochs", "-e", default=1, type=int)
     parser.add_argument("--learning-rate", "-lr", default=1e-3, type=float)
     parser.add_argument("--gpu", action="store_true")
+    parser.add_argument("--freeze", "-f", default=True, type=bool)
+    parser.add_argument("--state", "-s", help="Path to model state.", default=None)
     return parser.parse_args()
 
 
 def train(model, loader, loss_fn, optimizer, device):
-    model.train()
+    model.eval() # https://stackoverflow.com/questions/66534762/which-pytorch-modules-are-affected-by-model-eval-and-model-train
     train_loss = []
     for batch in tqdm.tqdm(loader, total=len(loader), desc="training..."):
         images = batch["image"].to(device)  # B x 3 x CROP_SIZE x CROP_SIZE
@@ -102,7 +104,9 @@ def main(args):
         CropCenter(CROP_SIZE),
         TransformByKeys(transforms.ToPILImage(), ("image",)),
         TransformByKeys(transforms.ToTensor(), ("image",)),
-        TransformByKeys(transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.25, 0.25, 0.25]), ("image",)),
+        # TransformByKeys(transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.25, 0.25, 0.25]), ("image",)),
+        TransformByKeys(transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ("image",)),
+
     ])
 
     print("Reading data...")
@@ -119,11 +123,16 @@ def main(args):
     device = torch.device("cuda:0") if args.gpu and torch.cuda.is_available() else torch.device("cpu")
 
     print("Creating model...")
-    model = MyModel()
+    model = MyModel(args.freeze)
+    if args.state:
+        with open(f"{args.state}", "rb") as fp:
+            state = torch.load(fp, map_location="cpu")
+            model.load_state_dict(state)
     model.to(device)
+    
 
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     loss_fn = fnn.mse_loss
 
     # 2. train & validate
@@ -153,6 +162,7 @@ def main(args):
         pickle.dump({"image_names": test_dataset.image_names,
                      "landmarks": test_predictions}, fp)
 
+    torch.save(model.state_dict(), f"{args.name}_model.obj")
     create_submission(args.data, test_predictions, os.path.join("runs", f"{args.name}_submit.csv"))
 
 

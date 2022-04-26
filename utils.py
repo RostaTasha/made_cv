@@ -9,7 +9,6 @@ from torch.utils import data
 
 np.random.seed(1234)
 torch.manual_seed(1234)
-
 TRAIN_SIZE = 0.8
 NUM_PTS = 971
 CROP_SIZE = 256
